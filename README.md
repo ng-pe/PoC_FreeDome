@@ -9,6 +9,5 @@ PoC to grab FSecure FreeDome (on Windows) configuration (from Stdin) and Passphr
  * Config file is saved in 	:  _PoC_ConfigFile.txt  and Passphrase in 		:  openvpnMgmtIn.log
  * Adapte config file and Have Fun :)
 
-You can download bin : http://ovh.to/BXWHdWD 
 
 This tools was made on linux with MonoDevelop
